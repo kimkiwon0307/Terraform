@@ -244,11 +244,293 @@ terraform {
   * **Backend:** 이 기억장치(State 파일)를 안전하게 보관하는 **'저장 장소'**입니다. 실무에서는 여러 개발자가 동일한 인프라를 안전하게 관리할 수 있도록 S3나 Terraform Cloud 같은 원격 저장소를 백엔드로 지정하여 공유합니다.
     
 
+### 3.4 리소스 (Resource)
+Terraform에서 **Resource**는 실제로 클라우드에 생성되는 물리적/논리적 인프라 자원을 의미합니다.
+* **종류:** EC2, VPC, Subnet, Security Group, RDS, S3 등 마우스 클릭으로 생성하던 모든 것이 리소스입니다.
+* **개념:** AWS 콘솔에서 화면을 클릭하며 만들던 인프라를 테라폼에서는 코드를 통해 정의하고 생성합니다.
+
+---
+
+#### 3.4.1 리소스 구성
+
+**1) 기본 구조**
+resource "리소스타입" "이름" {
+  # 설정 속성 (Arguments)
+}
+
+**2) 작성 예시**
+resource "aws_instance" "web" {
+  ami           = "ami-123456"
+  instance_type = "t3.micro"
+}
+
+**3) 구조 분석**
+* **`resource`:** 테라폼 리소스를 선언하는 키워드입니다.
+* **`aws_instance`:** 리소스의 종류(Type)를 뜻하며, 여기서는 AWS의 EC2 인스턴스를 의미합니다.
+* **`web`:** 테라폼 코드 내부에서 이 리소스를 식별하기 위해 사용자가 임의로 지정하는 이름입니다.
+
+---
+
+**4) 주요 AWS 리소스 예시**
+
+* **VPC 생성**
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+
+* **Subnet 생성**
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = "10.0.1.0/24"
+}
+
+* **EC2 인스턴스 생성**
+resource "aws_instance" "web" {
+  ami           = "ami-123"
+  instance_type = "t3.micro"
+}
+
+> **참고:** 실무 환경에서는 이러한 수십, 수백 개의 리소스들을 유기적으로 연결하여 관리하게 됩니다.
+
+---
+
+#### 3.4.2 종속성 (Dependency)
+인프라 구축에는 순서가 필요합니다. (예: `VPC 생성` ➔ `Subnet 생성` ➔ `EC2 생성`)
+* **암묵적 종속성 (Implicit Dependency):** 위 Subnet 예시처럼 `vpc_id = aws_vpc.main.id` 형태로 코드가 다른 리소스를 참조하면, 테라폼이 이를 자동으로 파악합니다. "VPC가 먼저 있어야 Subnet을 만들 수 있구나"라고 판단하여 순서대로 인프라를 생성합니다.
+
+#### 3.4.3 리소스 속성 참조
+리소스를 생성하고 나면 테라폼은 해당 자원의 세부 정보(VPC ID, ARN, CIDR 등)를 자동으로 추적하고 기억합니다. 덕분에 다른 리소스를 생성할 때 해당 결괏값(ID 등)을 간편하게 가져와 연결할 수 있습니다.
+
+#### 3.4.4 수명주기 (Lifecycle)
+인프라 자원이 생성, 변경, 삭제될 때의 상세 동작을 제어하는 옵션입니다.
+
+* **설정 예시:**
+resource "aws_instance" "web" {
+  # ... 인스턴스 설정 생략 ...
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+* **핵심 옵션 설명:**
+  * **`create_before_destroy = true`:** 테라폼의 기본 동작은 기존 자원을 '삭제한 후 새 자원을 생성'하는 것입니다. 이 옵션을 켜면 **새 자원을 먼저 생성한 뒤 기존 자원을 삭제**하므로, 인프라 교체 시 발생하는 서비스 중단(Downtime)을 방지할 수 있습니다.
+  * **`prevent_destroy = true`:** 실수로 리소스가 삭제되는 것을 절대적으로 금지합니다. (데이터베이스 등 중요 자원에 필수)
+  * **`ignore_changes`:** 외부 요인이나 특정 속성의 변경 사항을 테라폼이 감지하지 않고 무시하도록 설정합니다.
+
+### 3.5 데이터 소스 (Data Source)
+데이터 소스는 인프라를 새로 생성하지 않고, **이미 클라우드에 존재하는 정보를 조회하여 가져오는 기능**입니다.
+* **개념:** AWS 콘솔에 이미 만들어져 있는 VPC, AMI, Subnet, Security Group 등을 테라폼 코드로 읽어와서 사용하고 싶을 때 활용합니다.
+
+> **💡 Resource vs Data Source 핵심 차이**
+> * **Resource:** 인프라를 **새로 생성**할 때 사용 (예: 새로운 VPC 만들기)
+> * **Data Source:** 이미 생성되어 있는 인프라를 **조회**할 때 사용 (예: 기존 VPC ID 알아오기)
+
+---
+
+#### 3.5.1 데이터 소스 구성
+
+**1) 기본 구조**
+data "종류" "이름" {
+  # 조건을 지정하여 원하는 자원을 필터링합니다.
+}
+
+**2) 작성 예시 (최신 우분투 AMI 조회)**
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+}
+
+---
+
+#### 3.5.2 데이터 소스 속성 참조
+Resource 블록처럼 Data Source 블록도 조회 결과에 따른 고유한 속성(ID, ARN 등)을 가집니다. 다른 리소스에서 이 값을 가져와 연결할 수 있습니다.
+
+* **속성 참조 문법:** `data.종류.이름.속성` (예: `data.aws_vpc.main.id`)
+
+**🔍 Resource 참조 vs Data Source 참조 비교**
+* **Resource 참조:** `aws_vpc.main.id` (내가 코드로 만든 VPC의 ID)
+* **Data Source 참조:** `data.aws_vpc.main.id` (이미 있던 VPC를 조회해서 가져온 ID)
+
+---
+
+#### 3.5.3 실무에서 자주 사용하는 데이터 소스
+실무 환경에서는 인프라를 유기적으로 결합하기 위해 다음과 같은 데이터 소스를 매우 자주 사용합니다.
+
+* **`aws_ami`:** 인스턴스 생성에 필요한 최신 OS 이미지(AMI) 정보 조회
+* **`aws_vpc`:** 이미 구축되어 있는 기존 VPC 정보 조회
+* **`aws_subnet`:** 특정 서브넷 정보 및 ID 조회
+* **`aws_security_group`:** 기존에 정의된 보안 그룹 정보 조회
+* **`aws_caller_identity`:** 현재 테라폼을 실행 중인 AWS 계정 ID(Account ID) 및 자격증명 정보 조회
+
+### 3.6 입력 변수 (Variable)
+* **필요성:** 테라폼에서 변수는 **'설정값의 분리'**를 위해 사용합니다. 인프라 설정 코드와 실제 입력값을 분리함으로써 하나의 코드로 개발(Dev), 운영(Prod) 등 다양한 환경에 재사용할 수 있습니다.
+
+---
+
+#### 3.6.1 변수 선언 방식
+
+**1) 기본 구조**
+variable "변수_이름" {
+  type        = 자료형
+  default     = 기본값
+  description = "변수에 대한 설명"
+}
+
+**2) 작성 예시**
+variable "instance_type" {
+  type        = string
+  default     = "t3.micro"
+  description = "EC2 인스턴스의 스펙을 정의합니다."
+}
+
+**3) 구조 분석**
+* **`variable`:** 변수를 정의하겠다는 테라폼 키워드입니다.
+* **`instance_type`:** 고유한 변수 이름입니다. 코드 내에서 이 이름을 통해 호출합니다.
+* **`type`:** 변수에 들어올 데이터의 자료형을 강제합니다.
+* **`default`:** 변수 값이 별도로 지정되지 않았을 때 기본으로 적용될 값입니다.
+
+---
+
+#### 3.6.2 변수 유형 (Data Types)
+테라폼은 다음과 같은 다양한 타입의 변수를 지원합니다.
+
+* **`string` (문자열):** `"t3.micro"`, `"ap-northeast-2"`와 같은 텍스트 데이터
+* **`number` (숫자):** `3`, `80`과 같은 정수 및 실수 데이터
+* **`bool` (불리언):** `true` 또는 `false` 값
+* **`list` (리스트):** 순서가 있는 값들의 배열 (예: `["ap-northeast-2a", "ap-northeast-2c"]`)
+* **`map` (맵):** 키-값(Key-Value) 쌍으로 구성된 데이터 (예: `{ dev = "t3.micro", prod = "m5.large" }`)
+
+---
+
+#### 3.6.3 유효성 검사 (Validation)
+변수에 잘못된 값이 입력되어 인프라 생성이 실패하는 것을 방지하기 위해, 값이 들어오는 단계에서 미리 검사할 수 있습니다.
+
+* **작성 예시:**
+variable "environment" {
+  type = string
+
+  validation {
+    condition     = contains(["dev", "stage", "prod"], var.environment)
+    error_message = "환경명은 반드시 dev, stage, prod 중 하나여야 합니다."
+  }
+}
+
+> **💡 실무 활용 사례:**
+> * 허용된 특정 인스턴스 타입만 들어오도록 제한
+> * CIDR 블록 형식이 올바른지 검사 (`10.0.0.0/16` 등)
+> * 지정된 환경명(dev, prod) 검증
+
+---
+
+#### 3.6.4 변수 참조
+정의한 변수를 리소스 블록 등에서 가져다 쓸 때는 **`var.변수명`** 형태로 참조합니다.
+
+* **참조 예시:**
+resource "aws_instance" "web" {
+  ami           = "ami-123456"
+  instance_type = var.instance_type  # 변수 참조 적용
+}
+
+---
+
+#### 3.6.5 민감한 변수 취급 (Sensitive)
+비밀번호, API 토큰, 데이터베이스 접속 정보와 같이 외부로 노출되면 안 되는 민감한 변수에는 `sensitive = true` 옵션을 부여합니다.
+
+* **작성 예시:**
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+* **효과:** 이 옵션이 적용된 변수는 `terraform plan`이나 `terraform apply` 실행 시 터미널 화면에 값이 노출되지 않고 **`(sensitive value)`**로 마스킹 처리되어 안전하게 보호됩니다.
+
+---
+
+#### 3.6.6 변수 입력 방식과 우선순위
+테라폼은 변수 값을 외부에서 주입할 수 있는 다양한 경로를 제공하며, 여러 곳에서 동시에 입력될 경우 정해진 우선순위에 따라 최종 값이 결정됩니다.
+
+**1) 주요 입력 방식**
+* 실행 시점 입력: `terraform apply` 실행 후 터미널에 직접 타이핑하여 입력
+* 명령줄 명령어 옵션: `terraform apply -var="instance_type=t3.medium"`
+* 환경 변수 활용: 시스템 환경 변수에 `TF_VAR_instance_type` 등록
+* 변수 정의 파일 활용: `terraform.tfvars` 파일에 `instance_type = "t3.medium"` 형태로 미리 저장 (**실무에서 가장 선호하는 방식**)
+
+**2) 우선순위 (아래로 갈수록 우선순위가 높음)**
+1. 환경 변수 (`TF_VAR_변수명`)
+2. `terraform.tfvars` 파일
+3. `*.auto.tfvars` 파일
+4. CLI 명령줄 옵션 (`-var` 또는 `-var-file`)
+
+### 3.7 로컬 변수 (Local)
+로컬 변수는 **테라폼 코드 내부에서만 선언하고 사용하는 변수**입니다. 외부에서 값을 주입받는 `Variable`과 달리, 코드 안에서 값을 가공하거나 중복되는 자원 이름을 하나로 묶을 때 사용합니다.
+
+---
+
+#### 3.7.1 입력 변수(Variable) vs 로컬 변수(Local)
+
+| 구분 | Variable (입력 변수) | Local (로컬 변수) |
+| :--- | :---: | :---: |
+| **외부 입력 가능 여부** | O | X |
+| **사용자 값 변경 가능** | O | X |
+| **코드 내부 계산/가공용** | △ | O |
+| **실무 사용 빈도** | 매우 높음 | 매우 높음 |
+
+* **Variable:** 사용자가 실행 시점에 입력하는 값 (ex: EC2 타입, 리전, 배포 환경 등)
+* **Local:** 테라폼이 내부적으로 계산해서 사용하는 값 (ex: 공통 태그 이름, 규칙이 있는 리소스 이름, 문자열 조합 등)
+
+---
+
+#### 3.7.2 local 선언
+
+**1) 기본 구조**
+locals {
+  변수_이름1 = 값1
+  변수_이름2 = 값2
+}
+
+* **의미:** 테라폼 내부에서 쓸 변수들을 정의하며, 하나의 `locals` 블록 안에 여러 개의 변수를 동시에 선언할 수 있습니다.
+
+**2) 실무 활용 예시 (문자열 조합 및 태그 정의)**
+locals {
+  team        = "devops"
+  environment = "prod"
+  
+  # 변수와 일반 텍스트를 조합하여 내부 변수 생성
+  instance_name = "${local.team}-${local.environment}-web"
+
+  # 공통으로 사용할 태그 맵(Map) 정의
+  common_tags = {
+    ManagedBy = "Terraform"
+    Owner     = local.team
+  }
+}
+
+---
+
+#### 3.7.3 local 참조
+정의한 로컬 변수를 리소스에서 가져다 쓸 때는 **`local.변수이름`** 형태로 참조합니다. (※ 선언할 때는 `locals`이지만, 사용할 때는 단수형인 `local`을 사용합니다.)
+
+* **참조 문법:** `local.이름`
+
+* **참조 예시:**
+resource "aws_instance" "web" {
+  ami           = "ami-123456"
+  instance_type = "t3.micro"
+
+  tags = {
+    Name = local.instance_name  # 'devops-prod-web' 이라는 이름이 주입됩니다.
+  }
+}
 
 
-
-
-
+    
+    
+  
 
 
       
