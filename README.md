@@ -527,7 +527,38 @@ resource "aws_instance" "web" {
   }
 }
 
+---
 
+### 3.8 출력 (Output)
+Terraform이 인프라 구축 작업을 끝낸 후, 생성된 리소스의 주요 결과값을 사용자에게 화면으로 보여주거나 다른 모듈에 전달하는 기능입니다.
+
+#### 3.8.1 output 선언
+정의한 변수들을 리소스에서 출력할 때는 **`output`** 블록을 사용합니다.
+
+* **출력 대상별 선언 예시**
+
+| 출력 대상 | 코드 예시 | 설명 |
+| :--- | :--- | :--- |
+| **기본 구조** | `output "이름" { value = 값 }` | output 선언의 가장 기본적인 형태 |
+| **Resource 값** | `output "instance_id" { value = aws_instance.web.id }` | 생성된 자원의 속성 출력 (가장 많이 사용) |
+| **Data Source 값** | `output "vpc_id" { value = data.aws_vpc.main.id }` | 읽어온 외부 인프라 정보 출력 |
+| **Variable 값** | `output "env" { value = var.environment }` | 입력 변수 확인용 출력 |
+| **Local 값** | `output "project" { value = local.project_name }` | 내부 가공 변수 확인용 출력 |
+
+---
+
+#### 3.8.2 output 활용
+
+* **활용 1 : 디버깅**
+  * 테라폼 코드를 작성하면서 특정 변수나 리소스의 속성 값이 의도한 대로 유추되고 프로비저닝되었는지 `terraform apply` 후 화면에서 바로 확인할 수 있습니다.
+* **활용 2 : 리소스 정보 확인**
+  * 배포가 완료된 후 생성된 EC2의 퍼블릭 IP, 데이터베이스 엔드포인트(URL) 등 접속에 필요한 핵심 정보를 편리하게 추출합니다.
+* **활용 3 : 모듈 간 데이터 전달**
+  * 인프라를 모듈화했을 때, A 모듈(예: VPC)에서 생성된 서브넷 ID 같은 결괏값을 B 모듈(예: EC2)의 입력 매개변수(Variable)로 넘겨주는 다리 역할을 합니다.
+  
+      
+    
+  
     
     
   
