@@ -306,7 +306,7 @@ resource "aws_instance" "web" {
 
 * **설정 예시:**
 resource "aws_instance" "web" {
-  # ... 인스턴스 설정 생략 ...
+  ... 인스턴스 설정 생략 ...
 
   lifecycle {
     create_before_destroy = true
