@@ -255,7 +255,7 @@ Terraform에서 **Resource**는 실제로 클라우드에 생성되는 물리적
 
 **1) 기본 구조**
 resource "리소스타입" "이름" {
-  # 설정 속성 (Arguments)
+   설정 속성 (Arguments)
 }
 
 **2) 작성 예시**
