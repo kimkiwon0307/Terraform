@@ -740,6 +740,7 @@ provider "aws" {
   alias  = "tokyo"
   region = "ap-northeast-1"
 }
+```
 의미 : 서울용 AWS, 도쿄용 AWS
 
 활용 : 실무에서 멀티 리전 구성 시 사용
@@ -757,7 +758,7 @@ terraform {
   }
 }
     의미 : AWS Provider 사용, 5.x 버전 사용
-
+```
 ### 4.1.4. 프로바이더 설치
 * **명령어 :** `terraform init`
 * **실행 :** AWS Provider 다운로드
