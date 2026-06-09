@@ -500,10 +500,10 @@ locals {
   team        = "devops"
   environment = "prod"
   
-  # 변수와 일반 텍스트를 조합하여 내부 변수 생성
+  변수와 일반 텍스트를 조합하여 내부 변수 생성
   instance_name = "${local.team}-${local.environment}-web"
 
-  # 공통으로 사용할 태그 맵(Map) 정의
+  공통으로 사용할 태그 맵(Map) 정의
   common_tags = {
     ManagedBy = "Terraform"
     Owner     = local.team
