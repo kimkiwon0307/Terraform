@@ -169,6 +169,7 @@ resource "local_file" "hello" {
   filename = "${path.module}/hello-terraform.txt"
   content  = "안녕하세요! VS Code에서 테라폼 실습 중입니다.\n"
 }
+```
 
 ### 3.2 HCL (HashiCorp Configuration Language)
 테라폼을 배우면서 가장 먼저 익숙해져야 하는 언어가 바로 **HCL**입니다. 쉽게 말해 **테라폼 전용 인프라 설정 언어**입니다.
