@@ -151,8 +151,9 @@
 * **역할:** 협업 시 개발자 간의 코드 스타일을 일관되게 유지해 줍니다.
   > terraform fmt
 #### 실습
-#### 1. 테라폼 및 프로바이더 설정
-```bash
+
+```hcl
+# 1. 테라폼 및 프로바이더 설정
 terraform {
   required_version = ">= 1.0"
   required_providers {
@@ -163,12 +164,11 @@ terraform {
   }
 }
 
-#### 2. 로컬 파일 리소스 정의 (실제 생성될 파일)
+# 2. 로컬 파일 리소스 정의 (실제 생성될 파일)
 resource "local_file" "hello" {
   filename = "${path.module}/hello-terraform.txt"
   content  = "안녕하세요! VS Code에서 테라폼 실습 중입니다.\n"
 }
-```
 
 ### 3.2 HCL (HashiCorp Configuration Language)
 테라폼을 배우면서 가장 먼저 익숙해져야 하는 언어가 바로 **HCL**입니다. 쉽게 말해 **테라폼 전용 인프라 설정 언어**입니다.
