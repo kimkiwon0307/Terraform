@@ -49,21 +49,32 @@
   </ul>
 </details>
 
-2장 실행 환경 구성
-
-  2.1 테라폼 환경 구성
-    2.1.1 Terraform 설치
-      테라폼이란? 테라폼은 우리가 작성한 .tf 파일을 읽어서 AWS 같은 외부 인프라를 관리하는 실팽 프로그램(CLI)이다.
-      설치 확인 : CMD에서 Terrafrom version 
-    
-    2.1.2 Windows 사용자 환경 구성
-      테라폼 설치 위치 : 윈도우에서는 테라폼 실행 파일인 terraform.exe가 있어야한다. 
-      PATH란 : 명령어를 입력했을 때 windows가 프로그램을 찾아보는 경로 목록이다.
+<details>
+  <summary><b>2장 실행 환경 구성</b></summary>
   
-  2.2 IDE 구성
-    비주얼 스튜디오 설치
-    HashiCorp Terraform 확장 기능 설치
+  <h3>2.1 테라폼 환경 구성</h3>
+  <h4>2.1.1 Terraform 설치</h4>
+  <ul>
+    <li><b>테라폼 정의</b>: 작성한 <code>.tf</code> 파일을 읽어 AWS 같은 외부 인프라를 관리하는 실행 프로그램(CLI)</li>
+    <li><b>설치 확인</b>: CMD(명령 프롬프트)에서 <code>terraform version</code> 명령어 입력</li>
+  </ul>
 
-  2.3 CLI 구성 파일
+  <h4>2.1.2 Windows 사용자 환경 구성</h4>
+  <ul>
+    <li><b>테라폼 설치 위치</b>: 윈도우 환경에서는 테라폼 실행 파일인 <code>terraform.exe</code>가 필요</li>
+    <li><b>PATH(환경 변수)</b>: 명령어를 입력했을 때 윈도우가 실행 프로그램을 찾아보는 경로 목록</li>
+  </ul>
+
+  <h3>2.2 IDE 구성</h3>
+  <ul>
+    <li>Visual Studio Code(비주얼 스튜디오 코드) 설치</li>
+    <li>HashiCorp Terraform 확장 기능(Extension) 설치</li>
+  </ul>
+
+  <h3>2.3 CLI 구성 파일</h3>
+  <ul>
+    <li>테라폼 CLI 동작과 관련된 설정 및 구성 관리</li>
+  </ul>
+</details>
     
       
